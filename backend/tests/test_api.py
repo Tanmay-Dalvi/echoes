@@ -156,3 +156,28 @@ def test_import_validation_and_error_handling(client):
     # Unsupported version
     unsupported_res = client.post("/api/backup/import", json={"version": 99, "memories": []})
     assert unsupported_res.status_code == 400
+
+def test_health_endpoint_render_mode(monkeypatch, client):
+    monkeypatch.setenv("RENDER", "true")
+    monkeypatch.setenv("BACKEND_HOST", "0.0.0.0")
+    monkeypatch.setenv("ECHOES_DB_PATH", "./data/echoes.db")
+    res = client.get("/api/health")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["status"] == "healthy"
+    assert data["deployment"] == "render"
+    assert data["privacy"]["local_only"] is False
+    assert data["privacy"]["is_loopback"] is False
+    assert data["privacy"]["host_binding"] == "0.0.0.0"
+    assert data["storage"]["is_ephemeral"] is True
+    assert "Ephemeral storage active" in data["storage"]["persistence_notice"]
+
+def test_cors_onrender_origin(client):
+    res = client.options("/api/memories", headers={
+        "Origin": "https://echoes-frontend-test.onrender.com",
+        "Access-Control-Request-Method": "GET"
+    })
+    assert res.status_code == 200
+    assert res.headers.get("access-control-allow-origin") == "https://echoes-frontend-test.onrender.com"
+    assert res.headers.get("access-control-allow-credentials") == "true"
+

@@ -46,6 +46,7 @@ export interface HealthStatus {
   status: string;
   app: string;
   version: string;
+  deployment?: string;
   privacy: {
     local_only: boolean;
     telemetry: boolean;
@@ -57,6 +58,8 @@ export interface HealthStatus {
   storage: {
     type: string;
     total_memories: number;
+    is_ephemeral?: boolean;
+    persistence_notice?: string;
   };
   ai: {
     provider: string;

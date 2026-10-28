@@ -12,7 +12,9 @@ DEFAULT_DB_PATH = DEFAULT_DB_DIR / "echoes.db"
 def get_db_path() -> str:
     db_env = os.getenv("ECHOES_DB_PATH")
     if db_env:
-        return db_env
+        target = Path(db_env)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        return str(target)
     DEFAULT_DB_DIR.mkdir(parents=True, exist_ok=True)
     return str(DEFAULT_DB_PATH)
 

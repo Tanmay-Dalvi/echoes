@@ -76,9 +76,10 @@ class OllamaClient:
                     "model_available": False
                 }
         except Exception as e:
+            logger.warning("Could not reach Ollama at %s: %s", self.base_url, type(e).__name__)
             return {
                 "connected": False,
-                "error": str(e),
+                "error": "Ollama service unavailable or unreachable.",
                 "configured_model": self.model,
                 "model_available": False
             }

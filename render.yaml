@@ -1,0 +1,52 @@
+# Render Blueprint Specification for Echoes — A Private Memory Garden
+# Docs: https://render.com/docs/blueprint-spec
+# GitHub Repository: https://github.com/Tanmay-Dalvi/echoes
+version: "1"
+
+services:
+  # ---------------------------------------------------------------------------
+  # Echoes Backend API (FastAPI)
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: echoes-backend
+    runtime: python
+    rootDir: backend
+    plan: free
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: RENDER
+        value: "true"
+      - key: BACKEND_HOST
+        value: 0.0.0.0
+      - key: ECHOES_DB_PATH
+        value: ./data/echoes.db
+
+  # ---------------------------------------------------------------------------
+  # Echoes Frontend Client (React + Vite + Tailwind CSS)
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: echoes-frontend
+    runtime: static
+    rootDir: frontend
+    plan: free
+    region: oregon
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: NODE_VERSION
+        value: 20.18.0
+      - key: VITE_API_BASE_URL
+        fromService:
+          type: web
+          name: echoes-backend
+          property: url
+

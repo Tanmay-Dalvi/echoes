@@ -23,7 +23,7 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS: Allow local frontend development servers and optional configured origin
+# CORS: Allow local frontend development servers and configured origins
 default_origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
@@ -32,11 +32,16 @@ default_origins = [
     "http://localhost:4173",
     "http://127.0.0.1:4173",
 ]
+frontend_env = [f.strip() for f in [os.getenv("FRONTEND_URL", "")] if f.strip()]
 custom_origins = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "").split(",") if o.strip()]
+raw_origins = list(dict.fromkeys(default_origins + frontend_env + custom_origins))
+# Filter out wildcard if present to never mix '*' with allow_credentials=True
+allowed_origins = [o for o in raw_origins if o != "*"]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=default_origins + custom_origins,
+    allow_origins=allowed_origins,
+    allow_origin_regex=r"^https:\/\/.*\.onrender\.com$",
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
@@ -51,13 +56,18 @@ app.include_router(backup_router)
 async def health_check():
     ai_status = await ollama_client.check_status()
     total_memories = count_memories()
-    host_binding = os.getenv("BACKEND_HOST", "127.0.0.1")
-    is_loopback = host_binding in ("127.0.0.1", "localhost", "::1")
+    is_render = bool(os.getenv("RENDER"))
+    default_host = "0.0.0.0" if is_render else "127.0.0.1"
+    host_binding = os.getenv("BACKEND_HOST", default_host)
+    is_loopback = (not is_render) and (host_binding in ("127.0.0.1", "localhost", "::1"))
+    db_path = os.getenv("ECHOES_DB_PATH", "./data/echoes.db")
+    is_ephemeral = is_render and not db_path.startswith("/var/data")
 
     return {
         "status": "healthy",
         "app": "Echoes — A Private Memory Garden",
         "version": "1.0.0",
+        "deployment": "render" if is_render else "local",
         "privacy": {
             "local_only": is_loopback,
             "telemetry": False,
@@ -68,7 +78,13 @@ async def health_check():
         },
         "storage": {
             "type": "sqlite3_fts5",
-            "total_memories": total_memories
+            "total_memories": total_memories,
+            "is_ephemeral": is_ephemeral,
+            "persistence_notice": (
+                "Ephemeral storage active. Data resets on service restart unless a Render Persistent Disk is attached at /var/data."
+                if is_ephemeral
+                else "Persistent storage active."
+            )
         },
         "ai": {
             "provider": "ollama",
@@ -78,3 +94,10 @@ async def health_check():
             "offline_capable": True
         }
     }
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.getenv("PORT", 8000))
+    host = os.getenv("BACKEND_HOST", "0.0.0.0" if os.getenv("RENDER") else "127.0.0.1")
+    uvicorn.run("backend.app.main:app", host=host, port=port, reload=False)
+

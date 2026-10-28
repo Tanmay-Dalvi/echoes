@@ -196,6 +196,34 @@ Open your browser to: **`http://127.0.0.1:5173`**
 
 ---
 
+## Deploying to Render (Cloud Preview Demo)
+
+Echoes is engineered primarily as a local-first application to guarantee memory sovereignty. For reviewers, hackathon judges, or public demonstrations, Echoes can also be deployed to [Render](https://render.com) using its root [`render.yaml`](render.yaml) Blueprint.
+
+### Cloud Architecture & Privacy Integrity
+
+| Aspect | Local Self-Hosted Mode | Render Cloud Preview |
+| :--- | :--- | :--- |
+| **Binding** | Strict loopback `127.0.0.1:8000` | Public Web Service (`0.0.0.0:$PORT`) |
+| **CORS** | `http://127.0.0.1:5173` | Restricted to `*.onrender.com` & configured origins |
+| **Ollama AI** | On-device `gemma3:1b` (live inference) | Truthful **`AI Offline (Archive Active)`** status + labeled deterministic demo mode |
+| **Storage** | Persistent local `./data/echoes.db` | Ephemeral container (Free tier) or Persistent Disk (`/var/data`) |
+| **Cloud Telemetry** | **Zero** | **Zero** (no external tracking or silent LLM leakages) |
+
+> [!IMPORTANT]
+> **No Silent Cloud Leakage**: Cloud services on Render cannot reach an Ollama daemon running on a reviewer's personal laptop (`127.0.0.1:11434`). When deployed remotely, Echoes honestly reports the AI service as offline and activates the labeled deterministic fallback demo mode. It **never** silently ships memory text to proprietary cloud LLMs.
+
+### 1-Click Blueprint Deployment via Render
+
+1. Fork or push this repository to GitHub.
+2. In the [Render Dashboard](https://dashboard.render.com), click **New +** > **Blueprint**.
+3. Connect your repository. Render reads `render.yaml` to deploy:
+   - **`echoes-backend`**: FastAPI Python Web Service (runs Uvicorn on `0.0.0.0:$PORT` with health check at `/api/health`).
+   - **`echoes-frontend`**: Vite React Static Site (builds with `VITE_API_BASE_URL` dynamically injected).
+4. For complete manual deployment steps, persistent disk configuration, and troubleshooting, consult the [Render Deployment Guide](docs/DEPLOYMENT_RENDER.md).
+
+---
+
 ## Local AI Setup (Ollama)
 
 1. **Install Ollama**: Follow instructions at [ollama.com](https://ollama.com/download).
@@ -255,6 +283,7 @@ echoes/
 ├── docs/
 │   ├── ARCHITECTURE.md       # Technical architecture & schema specifications
 │   ├── DEMO.md               # 3-minute guided reviewer script
+│   ├── DEPLOYMENT_RENDER.md  # Render cloud preview deployment & environment guide
 │   ├── DEV_SUBMISSION.md     # Official DEV Community submission draft
 │   ├── IMPLEMENTATION_NOTES.md # Hardware benchmarks & design decisions
 │   ├── PRIVACY.md            # Privacy boundary & data at rest analysis
@@ -265,7 +294,8 @@ echoes/
 ├── .gitignore
 ├── CONTRIBUTING.md
 ├── LICENSE                   # MIT License
-└── pytest.ini
+├── pytest.ini
+└── render.yaml               # Render Blueprint (FastAPI Web Service + Vite Static Site)
 ```
 
 ---

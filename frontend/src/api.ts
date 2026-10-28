@@ -12,7 +12,23 @@ import {
   ImportResult,
 } from './types';
 
-const API_BASE = '/api';
+/**
+ * Resolves the API base URL.
+ * - In local development (or when VITE_API_BASE_URL is not set), defaults to '/api'
+ *   which leverages the Vite dev server proxy to http://127.0.0.1:8000.
+ * - In production (e.g. Render Static Site), uses VITE_API_BASE_URL pointing to the
+ *   deployed backend web service (e.g. 'https://echoes-backend.onrender.com').
+ */
+function resolveApiBase(): string {
+  const envUrl = (import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || '').trim();
+  if (!envUrl) {
+    return '/api';
+  }
+  const clean = envUrl.replace(/\/+$/, '');
+  return clean.endsWith('/api') ? clean : `${clean}/api`;
+}
+
+const API_BASE = resolveApiBase();
 
 export async function fetchHealth(): Promise<HealthStatus> {
   const res = await fetch(`${API_BASE}/health`);
