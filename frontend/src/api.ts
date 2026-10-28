@@ -17,13 +17,25 @@ import {
  * - In local development (or when VITE_API_BASE_URL is not set), defaults to '/api'
  *   which leverages the Vite dev server proxy to http://127.0.0.1:8000.
  * - In production (e.g. Render Static Site), uses VITE_API_BASE_URL pointing to the
- *   deployed backend web service (e.g. 'https://echoes-backend.onrender.com').
+ *   deployed backend web service (e.g. 'echoes-backend.onrender.com' or 'https://...').
  */
 function resolveApiBase(): string {
-  const envUrl = (import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || '').trim();
+  let envUrl = (
+    import.meta.env.VITE_API_URL ||
+    import.meta.env.VITE_API_BASE_URL ||
+    import.meta.env.VITE_API_HOST ||
+    ''
+  ).trim();
+
   if (!envUrl) {
     return '/api';
   }
+
+  // Prepend https:// if only hostname was passed (e.g. Render blueprint property: host)
+  if (!envUrl.startsWith('http://') && !envUrl.startsWith('https://') && !envUrl.startsWith('/')) {
+    envUrl = `https://${envUrl}`;
+  }
+
   const clean = envUrl.replace(/\/+$/, '');
   return clean.endsWith('/api') ? clean : `${clean}/api`;
 }

@@ -28,13 +28,12 @@ services:
 
   # ---------------------------------------------------------------------------
   # Echoes Frontend Client (React + Vite + Tailwind CSS)
+  # Note: Static sites are deployed to Render's global CDN and do not take a region.
   # ---------------------------------------------------------------------------
   - type: web
     name: echoes-frontend
     runtime: static
     rootDir: frontend
-    plan: free
-    region: oregon
     buildCommand: npm install && npm run build
     staticPublishPath: dist
     routes:
@@ -48,5 +47,4 @@ services:
         fromService:
           type: web
           name: echoes-backend
-          property: url
-
+          property: host
