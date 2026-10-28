@@ -78,12 +78,12 @@ If you prefer to configure services manually via the Render UI:
    - **Name**: `echoes-frontend`
    - **Branch**: `main`
    - **Root Directory**: `frontend`
-   - **Build Command**: `npm install && npm run build`
+   - **Build Command**: `npm install --include=optional && npm run build`
    - **Publish Directory**: `dist`
 4. Add the following **Environment Variables**:
    | Key | Value | Notes |
    | :--- | :--- | :--- |
-   | `NODE_VERSION` | `20.18.0` | Node LTS runtime |
+   | `NODE_VERSION` | `22` | Node.js 22 LTS (required for Vite 8 / Rolldown native bindings) |
    | `VITE_API_BASE_URL` | `https://<your-backend-app>.onrender.com` | Full URL to your backend Web Service |
 5. Add **Rewrite Rules** (under Redirects/Rewrites):
    - **Type**: `Rewrite`
