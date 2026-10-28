@@ -1,0 +1,27 @@
+flowchart LR
+    subgraph HostDevice["Local Machine Security Boundary (No External Transmission)"]
+        Browser["Local Browser UI\n(http://127.0.0.1:5173)"]
+        Backend["Local FastAPI Server\n(http://127.0.0.1:8000)"]
+        SQLiteDB[("./data/echoes.db\nLocal SQLite + FTS5")]
+        OllamaEngine["Local Ollama Service\n(http://127.0.0.1:11434)"]
+        GemmaWeights["Local Weights: gemma3:1b\n(On Local Disk)"]
+
+        Browser <-->|"Internal loopback"| Backend
+        Backend <-->|"Filesystem I/O"| SQLiteDB
+        Backend <-->|"Internal loopback"| OllamaEngine
+        OllamaEngine <-->|"Memory-mapped load"| GemmaWeights
+    end
+
+    subgraph ExternalWorld["External Internet (Completely Blocked)"]
+        CloudAI["Third-Party Cloud AI Providers\n(OpenAI, Anthropic, Gemini Cloud)\n[BLOCKED]"]
+        Telemetry["Remote Analytics & Trackers\n(Google Analytics, Sentry, Mixpanel)\n[NONE INCLUDED]"]
+        CDN["External CDN Fonts / Assets\n[SYSTEM FONTS USED - NONE LOADED]"]
+    end
+
+    HostDevice -. "Zero Outbound Traffic During Archive & AI Ops" .-x ExternalWorld
+
+    classDef host fill:#FBF9F4,stroke:#1A382A,stroke-width:2px;
+    classDef blocked fill:#FDE8E8,stroke:#9B1C1C,stroke-width:2px,stroke-dasharray: 4 4;
+    class HostDevice host;
+    class ExternalWorld blocked;
+

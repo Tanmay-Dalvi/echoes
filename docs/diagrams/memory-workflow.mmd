@@ -1,0 +1,25 @@
+flowchart TD
+    Start(["User creates or selects a memory"]) --> Form["Input Title, Story, Date/Era, People, Places, Tags"]
+    Form --> LocalSave["Save directly to Local SQLite Archive\n(Never sent to cloud)"]
+
+    LocalSave --> OptAI{"User requests\nLocal AI Assistance?"}
+
+    OptAI -- No --> Complete(["Memory preserved locally in Garden & Timeline"])
+
+    OptAI -- "Yes: Remembrance Card, Tribute, or Summary" --> GroundingPrompt["Assemble Prompt with Strict Ethical Grounding:\n- Ground strictly in user memory text\n- Never simulate consciousness or speak as deceased\n- Label as AI-assisted"]
+
+    GroundingPrompt --> OllamaCall["Execute Local Inference\n(Ollama gemma3:1b on 127.0.0.1)"]
+
+    OllamaCall --> ValidateSchema["Pydantic Output Validation\n(Parse JSON, verify required fields)"]
+
+    ValidateSchema -- Parse Error / Timeout --> Fallback["Report error or offer labeled\nOffline Deterministic Preview"]
+
+    ValidateSchema -- Valid Structured Output --> ReviewScreen["Display Output in UI with 'AI-Assisted' label:\nUser can review and freely edit prose"]
+
+    ReviewScreen --> Decision{"User Decision"}
+    Decision -- Discard --> DiscardAction["Discard generated output\n(Archive untouched)"]
+    Decision -- Accept / Save --> PersistUpdate["Persist accepted changes to Local SQLite"]
+
+    PersistUpdate --> Complete
+    DiscardAction --> Complete
+

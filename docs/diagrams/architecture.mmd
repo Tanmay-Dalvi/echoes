@@ -1,0 +1,51 @@
+flowchart TD
+    subgraph Client["Frontend Client (Browser - Port 5173)"]
+        UI["Echoes Web UI\n(React 19 + TypeScript + Tailwind v4)"]
+        Garden["Memory Garden Dashboard\n(Cards, Filters, Search)"]
+        Timeline["Timeline View\n(Chronological Stream & Undated Eras)"]
+        Studio["AI Studio\n(Cards, Tributes, Summaries)"]
+        Backup["Backup & Portability\n(Export / Restore JSON)"]
+        UI --> Garden
+        UI --> Timeline
+        UI --> Studio
+        UI --> Backup
+    end
+
+    subgraph PrivacyBoundary["Strict Privacy Boundary (127.0.0.1 Loopback Only)"]
+        API["FastAPI Backend Service\n(Port 8000 / Uvicorn)"]
+        Router["API Routers\n(/memories, /ai, /backup, /demo)"]
+        PydanticVal["Structured Output Validation\n(Pydantic V2 Schemas)"]
+        DBEngine["Storage Engine\n(SQLite3 + FTS5 Full-Text Search)"]
+        OllamaBridge["Ollama Client Adapter\n(Strict Grounding & Ethics Prompts)"]
+        API --> Router
+        Router --> DBEngine
+        Router --> OllamaBridge
+        OllamaBridge --> PydanticVal
+    end
+
+    subgraph LocalStorage["Local Disk Storage"]
+        DBFile[("./data/echoes.db\nSQLite File")]
+        ExportFile[("User JSON Backups\nechoes-archive-*.json")]
+        DBEngine --> DBFile
+        Backup -.-> ExportFile
+    end
+
+    subgraph LocalInference["Local Open-Weight Inference (Port 11434)"]
+        OllamaSvc["Ollama Daemon\n(http://127.0.0.1:11434)"]
+        GemmaModel["gemma3:1b Model Weights\n(806 MB Q4 Quantized)"]
+        OllamaSvc --> GemmaModel
+    end
+
+    UI <== "HTTP / JSON Proxy" ==> API
+    OllamaBridge <== "Local Loopback POST" ==> OllamaSvc
+    PydanticVal ==> "Validated Structured Result" ==> Studio
+    Studio ==> "User Review & Explicit Approval" ==> Router
+
+    classDef safe fill:#F4EFE6,stroke:#1A382A,stroke-width:2px,color:#1A382A;
+    classDef boundary fill:#EAE4DC,stroke:#C5933A,stroke-width:2px,stroke-dasharray: 5 5,color:#1A382A;
+    classDef storage fill:#EDE5D5,stroke:#1A382A,stroke-width:2px,color:#1A382A;
+    class Client safe;
+    class PrivacyBoundary boundary;
+    class LocalStorage storage;
+    class LocalInference safe;
+
